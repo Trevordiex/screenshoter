@@ -1,0 +1,11 @@
+from decouple import config
+
+
+TWITTER_ACCESS_TOKEN = config('TWITTER_ACCESS_TOKEN',default='')
+TWITTER_ACCESS_TOKEN_SECRET = config('TWITTER_ACCESS_TOKEN_SECRET', default='')
+TWITTER_CONSUMER_KEY = config('TWITTER_CONSUMER_KEY', default='')
+TWITTER_CONSUMER_SECRET = config('TWITTER_CONSUMER_SECRET', default='')
+TWITTER_BEARER_TOKEN = config('TWITTER_BEARER_TOKEN', default= '')
+
+TELEGRAM_TOKEN = config('TELEGRAM_TOKEN', default='')
+

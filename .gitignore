@@ -1,0 +1,5 @@
+.env
+.cryptos
+mock.py
+users.json
+*.pyc
