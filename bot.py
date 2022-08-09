@@ -177,3 +177,8 @@ stream = Listener(
 )
 
 
+
+
+if not stream.running:
+    stream.filter(track=["@prettiercam"])
+print('********************************* Stream is Running ***********************************')
