@@ -24,7 +24,7 @@ class BaseTweetImage:
     QRCODE_SIZE = (50, 50)
     TEXT_FONT_SIZE = 18
     CHAR_PER_LINE=52
-    CHAR_PER_LINE_SIMPLE=65
+    CHAR_PER_LINE_SIMPLE=62
     WHITE=(255,255,255,255)
     BLACK=(0, 0, 0, 255)
     FONTS = {
