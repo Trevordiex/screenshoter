@@ -2,12 +2,15 @@
 import json
 import random
 import tweepy
+import logging
 from collections import deque
 from post import TweetImage
 import settings
 import enum
 from thread import ThreadImage
 from utils import get_users, paginate, save_users, tweet_to_post
+
+logger = logging.getLogger(__name__)
 
 class Listener(tweepy.Stream):
     auth = tweepy.OAuthHandler(settings.TWITTER_CONSUMER_KEY, settings.TWITTER_CONSUMER_SECRET)
@@ -71,6 +74,7 @@ class Listener(tweepy.Stream):
             #upload the image back to twitter mentioning the requester
             self.post_image(response, in_reply_to_status_id=target_tweet_id, tagger=tagger)
         except BaseException as e:
+            logger.exception()
             print("Error: ", e)
 
         return True
@@ -180,5 +184,6 @@ stream = Listener(
 
 
 if not stream.running:
+    print('********************************* Stream is about to start ***********************************')
     stream.filter(track=["@prettiercam"])
 print('********************************* Stream is Running ***********************************')

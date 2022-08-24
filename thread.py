@@ -17,7 +17,7 @@ class ThreadImage(BaseTweetImage):
         #draw a white background polygon to cover the canvas
         self.canvas.polygon(
             [(0,0),(image_width,0),(image_width,image_height),(0,image_height)],
-            fill = (255,240,255,255)
+            fill = self.BLACK
             )
         posts = self.post
         post = posts[0]

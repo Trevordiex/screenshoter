@@ -17,7 +17,7 @@ def fmt(number):
 
 def tweet_to_post(tweet):
     user = tweet['user']
-    text = tweet['full_text'].replace('\n', ' ')
+    text = tweet['full_text']
     text = re.sub(r"https://t.co/\w+", "", text)
     text_list = deque(text.split(' '))
     while text_list[0].startswith('@'):

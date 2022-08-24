@@ -1,10 +1,11 @@
 from PIL import Image, ImageFont, ImageDraw, ImageChops, ImageOps
+from pilmoji import Pilmoji
 import textwrap
 # from io import BytesIO, FileIO
 # from collections import namedtuple
 # from utils import fmt
 # from mock import post
-from utils import make_qrcode, round_corners
+from utils import make_qrcode, round_corners, tweet_to_post
 
 
 
@@ -14,7 +15,7 @@ class BaseTweetImage:
     '''A class to transform a tweet post into an image
     
     '''
-
+    BOT_NAME = 'prettiercam'
     IMAGE_SIZE = (500,350)
     LOGO_SIZE = (35, 35)
     PADDING = 15
@@ -24,10 +25,12 @@ class BaseTweetImage:
     TEXT_FONT_SIZE = 18
     CHAR_PER_LINE=52
     CHAR_PER_LINE_SIMPLE=65
+    WHITE=(255,255,255,255)
+    BLACK=(0, 0, 0, 255)
     FONTS = {
-        'text': ImageFont.truetype('static/fonts/weather/weather.ttf', 18),
-        'simple_text': ImageFont.truetype('static/fonts/Abel/Abel-Regular.ttf', 18),
-        'name': ImageFont.truetype('static/fonts/Kreon/Kreon-VariableFont_wght.ttf', 16),
+        'text': ImageFont.truetype('static/fonts/poppins/Poppins-Regular.ttf', 18, layout_engine=ImageFont.LAYOUT_RAQM, encoding='unic'),
+        'simple_text': ImageFont.truetype('static/fonts/Abel/Abel-Regular.ttf', 18, layout_engine=ImageFont.LAYOUT_RAQM),
+        'name': ImageFont.truetype('static/fonts/Kreon/Kreon-VariableFont_wght.ttf', 16, layout_engine=ImageFont.LAYOUT_RAQM),
     }
 
     def __init__(self, post, *, roll=False, media=False):
@@ -36,14 +39,17 @@ class BaseTweetImage:
 
         if media and self.post['media']:
             im = Image.open(self.post['media'])
-            size = self.IMAGE_SIZE[0] - (2*self.PADDING), im.size[1]
-            photo = ImageOps.contain(im, size)
+            image_width = self.IMAGE_SIZE[0] - (2*self.PADDING)
+            image_height = int((image_width * im.size[1]) / im.size[0])
+
+            #scale im to fit width of image
+            photo = im.resize((image_width, image_height))
             self.post['media'] = photo
 
             h = photo.size[1]
             self.image_size = self.image_size[0], self.image_size[1] + h + self.PADDING
 
-        self.image = Image.new('RGBA', self.image_size, (255,255,255,255))
+        self.image = Image.new('RGBA', self.image_size, self.BLACK)
         self.canvas = ImageDraw.Draw(self.image)
         self.cursor = (0,0)
 
@@ -73,6 +79,7 @@ class BaseTweetImage:
         name = user['name']
         username = user['username']
         font = self.FONTS['name']
+        text_font = self.FONTS['text']
         text_height = font.getsize(name)[1]
         
         self.cursor = (self.PADDING, self.cursor[1])
@@ -84,9 +91,10 @@ class BaseTweetImage:
             self.cursor[1] + self.LOGO_SIZE[0]/2 - (text_height + 1)
         )
 
-        self.canvas.text(self.cursor, name,font = font,fill = (0,0,0,255))
-        self.cursor = self.cursor[0], self.cursor[1] + text_height + 2
-        self.canvas.text(self.cursor,f'@{username}', font = font, fill = (0,0,0,255))
+        with Pilmoji(self.image) as canvas:
+            canvas.text(self.cursor, name,font = text_font,fill = self.WHITE)
+            self.cursor = self.cursor[0], self.cursor[1] + text_height + 2
+            canvas.text(self.cursor,f'@{username}', font = font, fill = self.WHITE)
         
         #paste the qrcode to the upper right of the canvas
         if qrcode:
@@ -97,6 +105,7 @@ class BaseTweetImage:
             self.image.paste(qrcode, (icon_cord, self.PADDING))
 
             self.cursor = self.cursor = self.cursor[0], self.cursor[1] + text_height
+
         return self.cursor[1]
 
 
@@ -126,19 +135,20 @@ class BaseTweetImage:
         --------
         :int:
         """
-        canvas = self.canvas
-        text_lines = textwrap.wrap(tweet, width = self.CHAR_PER_LINE)
-        xcord, ycord = self.cursor
+    
+        text_lines = self.tweet_to_lines(tweet)
+        xcord, ycord = int(self.cursor[0]), int(self.cursor[1])
         font = self.FONTS['text']
 
+        with Pilmoji(self.image) as canvas:
+            for line in text_lines:
+                line_width, line_height = font.getsize(line)
+                xcord = self.PADDING
+                canvas.text((xcord, ycord),line,font = font,fill = self.WHITE)		
+                ycord += int(line_height)
+                ycord += self.LINE_SPACING
+            self.cursor = xcord, int(ycord)
 
-        for line in text_lines:
-            line_width, line_height = font.getsize(line)
-            xcord = self.PADDING
-            canvas.text((xcord, ycord),line,font = font,fill = (0,0,0,255))		
-            ycord += line_height
-            ycord += self.LINE_SPACING
-        self.cursor = xcord, int(ycord)
         return ycord
 
     def add_photo(self):
@@ -178,8 +188,8 @@ class BaseTweetImage:
         brand_text = '@prettiercam'
         text_width, text_height = font.getsize(brand_text)
         xcord = self.image_size[0] - (text_width + self.PADDING)
-        ycord = self.image_size[1] - (self.PADDING + text_height)
-        self.canvas.text((xcord, ycord - 10), brand_text, font = font,fill = (100,100,255,255))
+        ycord = self.image_size[1] - text_height
+        self.canvas.text((xcord, ycord), brand_text, font = font, fill = (100,100,255,255))
 
         return ycord
 
@@ -198,7 +208,7 @@ class BaseTweetImage:
     @classmethod
     def text_height(cls, post):
         post_height = 0
-        lines = textwrap.wrap(post, width=cls.CHAR_PER_LINE)
+        lines = cls.tweet_to_lines(post)
         font = cls.FONTS['text']
         w,h = font.getsize(lines[0])
         for line in lines:
@@ -229,6 +239,18 @@ class BaseTweetImage:
         height += cls.PADDING + 40
 
         return (cls.IMAGE_SIZE[0], max(height, 320))
+
+    @classmethod
+    def tweet_to_lines(cls, text):
+        expanded = text.split('\n')
+        lines = []
+        for l in expanded:
+            if l == '\n':
+                lines.append(l)
+            else:
+                lines.extend(textwrap.wrap(l, cls.CHAR_PER_LINE))
+
+        return lines
     
 
 
