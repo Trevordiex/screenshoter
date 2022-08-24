@@ -130,6 +130,7 @@ class Listener(tweepy.Stream):
         2. capture thread
         3. capture roll -- for multi level thread.
         
+        Follow me to use me.
         Also send a dm to @diexlabs to brand your screenshots for free. ♥ '''
         
         self.api.update_status(
