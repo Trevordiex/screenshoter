@@ -1,4 +1,5 @@
-#!/home/ubuntu/workspace/screenshoter/.cryptos/bin/python
+#!/usr/bin/sh
 
 cd /home/ubuntu/workspace/screenshoter
-python bot.py
+
+/home/ubuntu/workspace/screenshoter/.cryptos/bin/python bot.py

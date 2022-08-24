@@ -74,7 +74,7 @@ class Listener(tweepy.Stream):
             #upload the image back to twitter mentioning the requester
             self.post_image(response, in_reply_to_status_id=target_tweet_id, tagger=tagger)
         except BaseException as e:
-            logger.exception()
+            logger.exception('An error occured: ')
             print("Error: ", e)
 
         return True
